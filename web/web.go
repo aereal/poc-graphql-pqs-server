@@ -1,0 +1,82 @@
+package web
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"net"
+	"net/http"
+	"net/http/httptrace"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+)
+
+const defaultPort = "8080"
+
+var shutdownGrace = time.Second * 5
+
+type Option func(*Server)
+
+func WithPort(port string) Option { return func(s *Server) { s.port = port } }
+
+func New(opts ...Option) *Server {
+	s := &Server{}
+	for _, o := range opts {
+		o(s)
+	}
+	if s.port == "" {
+		s.port = defaultPort
+	}
+	return s
+}
+
+type Server struct {
+	port string
+}
+
+func (s *Server) handlerRoot() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { fmt.Fprintln(w, "ok") })
+}
+
+func (s *Server) handler() http.Handler {
+	mux := http.NewServeMux()
+	mux.Handle("/", s.handlerRoot())
+	return withOtel(mux)
+}
+
+func (s *Server) Start(ctx context.Context) error {
+	srv := &http.Server{
+		Addr:    net.JoinHostPort("", s.port),
+		Handler: s.handler(),
+	}
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+	go func() {
+		<-ctx.Done()
+		slog.DebugContext(ctx, "shutting down server", slog.Duration("shutdown_grace", shutdownGrace))
+		ctx, cancel := context.WithTimeout(context.Background(), shutdownGrace)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			slog.WarnContext(ctx, "cannot shutting down server gracefully", slog.String("error", err.Error()))
+		}
+	}()
+	slog.InfoContext(ctx, "start server", slog.String("port", s.port))
+	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
+}
+
+func withOtel(next http.Handler) http.Handler {
+	return otelhttp.NewMiddleware("", otelhttp.WithMessageEvents(otelhttp.ReadEvents, otelhttp.WriteEvents), otelhttp.WithSpanNameFormatter(formatSpanName), otelhttp.WithPublicEndpoint(), otelhttp.WithClientTrace(func(ctx context.Context) *httptrace.ClientTrace { return otelhttptrace.NewClientTrace(ctx) }))(next)
+}
+
+func formatSpanName(_ string, r *http.Request) string {
+	return fmt.Sprintf("%s %s", r.Method, r.URL.Path)
+}
