@@ -1,0 +1,28 @@
+---
+
+version: '3'
+services:
+  zipkin:
+    image: 'ghcr.io/openzipkin/zipkin:latest'
+    ports:
+      - '9411:9411'
+  otel-collector:
+    image: 'ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.91.0'
+    ports:
+      - '4317:4317'
+    volumes:
+      - './etc/otel-collector.yml:/etc/otelcol-contrib/config.yaml'
+    environment:
+      ZIPKIN_ORIGIN: 'http://zipkin:9411'
+  postgres:
+    image: 'postgres:16.1'
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD:
+    volumes:
+      - './etc/ddl.sql:/docker-entrypoint-initdb.d/01_ddl.sql'
+      - './var/postgres:/var/lib/postgresql'
+    ports:
+      - '5432:5432'
