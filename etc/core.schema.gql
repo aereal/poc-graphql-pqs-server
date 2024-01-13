@@ -1,5 +1,47 @@
+enum Element {
+  PYRO
+  HYDRO
+  CRYO
+  ELECTRO
+  ANEMO
+  GEO
+  DENDRO
+}
+
+enum WeaponKind {
+  SWORD
+  CLAYMORE
+  BOW
+  CATALYST
+  POLEARM
+}
+
+enum Region {
+  MONDSTADT
+  LIYUE
+  INAZUMA
+  SUMERU
+  FONTAINE
+  NATLAN
+  SNEZHNAYA
+}
+
+type UniqueAbility {
+  kind: String!
+  score: Float!
+}
+
 type Character {
   name: String!
+  element: Element!
+  weaponKind: WeaponKind!
+  region: Region!
+  rarelity: Int!
+  health: Int!
+  attack: Int!
+  defence: Int!
+  elementEnergy: Int!
+  uniqueAbility: UniqueAbility!
 }
 
 extend type Query {

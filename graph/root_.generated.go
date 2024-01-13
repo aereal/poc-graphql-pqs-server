@@ -40,11 +40,25 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Character struct {
-		Name func(childComplexity int) int
+		Attack        func(childComplexity int) int
+		Defence       func(childComplexity int) int
+		Element       func(childComplexity int) int
+		ElementEnergy func(childComplexity int) int
+		Health        func(childComplexity int) int
+		Name          func(childComplexity int) int
+		Rarelity      func(childComplexity int) int
+		Region        func(childComplexity int) int
+		UniqueAbility func(childComplexity int) int
+		WeaponKind    func(childComplexity int) int
 	}
 
 	Query struct {
 		Character func(childComplexity int, name string) int
+	}
+
+	UniqueAbility struct {
+		Kind  func(childComplexity int) int
+		Score func(childComplexity int) int
 	}
 }
 
@@ -67,12 +81,75 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
+	case "Character.attack":
+		if e.complexity.Character.Attack == nil {
+			break
+		}
+
+		return e.complexity.Character.Attack(childComplexity), true
+
+	case "Character.defence":
+		if e.complexity.Character.Defence == nil {
+			break
+		}
+
+		return e.complexity.Character.Defence(childComplexity), true
+
+	case "Character.element":
+		if e.complexity.Character.Element == nil {
+			break
+		}
+
+		return e.complexity.Character.Element(childComplexity), true
+
+	case "Character.elementEnergy":
+		if e.complexity.Character.ElementEnergy == nil {
+			break
+		}
+
+		return e.complexity.Character.ElementEnergy(childComplexity), true
+
+	case "Character.health":
+		if e.complexity.Character.Health == nil {
+			break
+		}
+
+		return e.complexity.Character.Health(childComplexity), true
+
 	case "Character.name":
 		if e.complexity.Character.Name == nil {
 			break
 		}
 
 		return e.complexity.Character.Name(childComplexity), true
+
+	case "Character.rarelity":
+		if e.complexity.Character.Rarelity == nil {
+			break
+		}
+
+		return e.complexity.Character.Rarelity(childComplexity), true
+
+	case "Character.region":
+		if e.complexity.Character.Region == nil {
+			break
+		}
+
+		return e.complexity.Character.Region(childComplexity), true
+
+	case "Character.uniqueAbility":
+		if e.complexity.Character.UniqueAbility == nil {
+			break
+		}
+
+		return e.complexity.Character.UniqueAbility(childComplexity), true
+
+	case "Character.weaponKind":
+		if e.complexity.Character.WeaponKind == nil {
+			break
+		}
+
+		return e.complexity.Character.WeaponKind(childComplexity), true
 
 	case "Query.character":
 		if e.complexity.Query.Character == nil {
@@ -85,6 +162,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Character(childComplexity, args["name"].(string)), true
+
+	case "UniqueAbility.kind":
+		if e.complexity.UniqueAbility.Kind == nil {
+			break
+		}
+
+		return e.complexity.UniqueAbility.Kind(childComplexity), true
+
+	case "UniqueAbility.score":
+		if e.complexity.UniqueAbility.Score == nil {
+			break
+		}
+
+		return e.complexity.UniqueAbility.Score(childComplexity), true
 
 	}
 	return 0, false
@@ -175,8 +266,50 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../etc/core.schema.gql", Input: `type Character {
+	{Name: "../etc/core.schema.gql", Input: `enum Element {
+  PYRO
+  HYDRO
+  CRYO
+  ELECTRO
+  ANEMO
+  GEO
+  DENDRO
+}
+
+enum WeaponKind {
+  SWORD
+  CLAYMORE
+  BOW
+  CATALYST
+  POLEARM
+}
+
+enum Region {
+  MONDSTADT
+  LIYUE
+  INAZUMA
+  SUMERU
+  FONTAINE
+  NATLAN
+  SNEZHNAYA
+}
+
+type UniqueAbility {
+  kind: String!
+  score: Float!
+}
+
+type Character {
   name: String!
+  element: Element!
+  weaponKind: WeaponKind!
+  region: Region!
+  rarelity: Int!
+  health: Int!
+  attack: Int!
+  defence: Int!
+  elementEnergy: Int!
+  uniqueAbility: UniqueAbility!
 }
 
 extend type Query {

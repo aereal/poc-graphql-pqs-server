@@ -16,3 +16,15 @@ models:
   Character:
     model:
       - github.com/aereal/poc-graphql-pqs-server/domain.Character
+  Element:
+    model:
+      - github.com/aereal/poc-graphql-pqs-server/domain.Element
+  WeaponKind:
+    model:
+      - github.com/aereal/poc-graphql-pqs-server/domain.WeaponKind
+  Region:
+    model:
+      - github.com/aereal/poc-graphql-pqs-server/domain.Region
+  UniqueAbility:
+    model:
+      - github.com/aereal/poc-graphql-pqs-server/domain.UniqueAbility
