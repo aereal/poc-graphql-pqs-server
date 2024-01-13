@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/aereal/poc-graphql-pqs-server/graph"
+	"github.com/aereal/poc-graphql-pqs-server/graph/resolvers"
 	"github.com/aereal/poc-graphql-pqs-server/logging"
 	"github.com/aereal/poc-graphql-pqs-server/otel/otelinstrument"
 	"github.com/aereal/poc-graphql-pqs-server/web"
@@ -30,7 +32,8 @@ func run() int {
 	}
 	defer shutdown()
 
-	srv := web.New(web.WithPort(os.Getenv("PORT")))
+	es := graph.NewExecutableSchema(graph.Config{Resolvers: resolvers.New()})
+	srv := web.New(web.WithPort(os.Getenv("PORT")), web.WithExecutableSchema(es))
 	if err := srv.Start(ctx); err != nil {
 		slog.Error("server is closed", slog.String("error", err.Error()))
 		return 1

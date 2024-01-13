@@ -1,0 +1,7 @@
+type Character {
+  name: String!
+}
+
+extend type Query {
+  character(name: String!): Character
+}

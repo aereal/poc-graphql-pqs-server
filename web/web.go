@@ -13,6 +13,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/aereal/otelgqlgen"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -24,6 +28,10 @@ var shutdownGrace = time.Second * 5
 type Option func(*Server)
 
 func WithPort(port string) Option { return func(s *Server) { s.port = port } }
+
+func WithExecutableSchema(es graphql.ExecutableSchema) Option {
+	return func(s *Server) { s.executableSchema = es }
+}
 
 func New(opts ...Option) *Server {
 	s := &Server{}
@@ -37,7 +45,8 @@ func New(opts ...Option) *Server {
 }
 
 type Server struct {
-	port string
+	port             string
+	executableSchema graphql.ExecutableSchema
 }
 
 func (s *Server) handlerRoot() http.Handler {
@@ -47,7 +56,15 @@ func (s *Server) handlerRoot() http.Handler {
 func (s *Server) handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/", s.handlerRoot())
+	mux.Handle("/graphql", s.handlerGraphql())
 	return withOtel(mux)
+}
+
+func (s *Server) handlerGraphql() http.Handler {
+	h := handler.New(s.executableSchema)
+	h.AddTransport(transport.POST{})
+	h.Use(otelgqlgen.New())
+	return h
 }
 
 func (s *Server) Start(ctx context.Context) error {
