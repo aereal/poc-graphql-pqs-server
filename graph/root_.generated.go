@@ -328,30 +328,87 @@ var sources = []*ast.Source{
 scalar Numeric
 
 enum Element {
+  """
+  # 炎
+  """
   PYRO
+  """
+  # 水
+  """
   HYDRO
+  """
+  # 氷
+  """
   CRYO
+  """
+  # 雷
+  """
   ELECTRO
+  """
+  # 風
+  """
   ANEMO
+  """
+  # 岩
+  """
   GEO
+  """
+  # 草
+  """
   DENDRO
 }
 
 enum WeaponKind {
+  """
+  # 片手剣
+  """
   SWORD
+  """
+  # 両手剣
+  """
   CLAYMORE
+  """
+  # 弓
+  """
   BOW
+  """
+  # 法器
+  """
   CATALYST
+  """
+  # 長柄武器
+  """
   POLEARM
 }
 
 enum Region {
+  """
+  # モンド
+  """
   MONDSTADT
+  """
+  # 璃月
+  """
   LIYUE
+  """
+  # 稲妻
+  """
   INAZUMA
+  """
+  # スメール
+  """
   SUMERU
+  """
+  # フォンテーヌ
+  """
   FONTAINE
+  """
+  # ナタ
+  """
   NATLAN
+  """
+  # スネージナヤ
+  """
   SNEZHNAYA
 }
 
