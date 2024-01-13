@@ -19,6 +19,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/aereal/otelgqlgen"
 	"github.com/aereal/poc-graphql-pqs-server/graph/loaders"
+	"github.com/rs/cors"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -71,7 +72,11 @@ func (s *Server) handlerGraphql() http.Handler {
 	h.Use(extension.Introspection{})
 	h.Use(otelgqlgen.New())
 	h.Use(s.loaderRoot)
-	return h
+	opts := cors.Options{
+		AllowedMethods:   []string{http.MethodPost},
+		AllowCredentials: true,
+	}
+	return cors.New(opts).Handler(h)
 }
 
 func (s *Server) Start(ctx context.Context) error {
