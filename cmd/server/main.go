@@ -42,7 +42,8 @@ func run() int {
 	}
 	characterRepo := domain.NewCharacterRepository(domain.WithDB(db))
 	loaderRoot := loaders.New(loaders.WithCharacterRepository(characterRepo))
-	es := graph.NewExecutableSchema(graph.Config{Resolvers: resolvers.New()})
+	resolverRoot := resolvers.New(resolvers.WithCharacterRepository(characterRepo))
+	es := graph.NewExecutableSchema(graph.Config{Resolvers: resolverRoot})
 	srv := web.New(web.WithPort(os.Getenv("PORT")), web.WithExecutableSchema(es), web.WithLoaderRoot(loaderRoot))
 	if err := srv.Start(ctx); err != nil {
 		slog.Error("server is closed", slog.String("error", err.Error()))

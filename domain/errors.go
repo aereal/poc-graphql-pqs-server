@@ -1,6 +1,9 @@
 package domain
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 type QueryBuildError struct{ err error }
 
@@ -16,3 +19,10 @@ func (e *NotFoundError[K, T]) Error() string {
 	var t T
 	return fmt.Sprintf("%T (key: %v (%T)) is not found", t, e.Key, e.Key)
 }
+
+var (
+	ErrInvalidOrderDirection      = errors.New("invalid order direction")
+	ErrInvalidCharacterOrderField = errors.New("invalid charcter order field")
+	ErrInvalidLimit               = errors.New("invalid limit")
+	ErrUnknownNumericKind         = errors.New("unknown numeric kind")
+)

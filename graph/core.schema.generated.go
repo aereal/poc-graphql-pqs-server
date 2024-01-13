@@ -7,11 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/aereal/poc-graphql-pqs-server/domain"
+	"github.com/aereal/poc-graphql-pqs-server/graph/dto"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -19,6 +21,7 @@ import (
 
 type QueryResolver interface {
 	Character(ctx context.Context, name string) (*domain.Character, error)
+	Characters(ctx context.Context, order *dto.CharactersOrder, filter *domain.CharacterFilterCriteria, first uint) (*dto.CharacterConnection, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -52,6 +55,39 @@ func (ec *executionContext) field_Query_character_args(ctx context.Context, rawA
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_characters_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *dto.CharactersOrder
+	if tmp, ok := rawArgs["order"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
+		arg0, err = ec.unmarshalOCharactersOrder2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋgraphᚋdtoᚐCharactersOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["order"] = arg0
+	var arg1 *domain.CharacterFilterCriteria
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg1, err = ec.unmarshalOCharacterFilterCriteria2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐCharacterFilterCriteria(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg1
+	var arg2 uint
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg2, err = ec.unmarshalNUnsignedInt2uint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg2
 	return args, nil
 }
 
@@ -509,6 +545,207 @@ func (ec *executionContext) fieldContext_Character_uniqueAbility(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _CharacterConnection_nodes(ctx context.Context, field graphql.CollectedField, obj *dto.CharacterConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CharacterConnection_nodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*domain.Character)
+	fc.Result = res
+	return ec.marshalNCharacter2ᚕᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐCharacterᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CharacterConnection_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CharacterConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Character_name(ctx, field)
+			case "element":
+				return ec.fieldContext_Character_element(ctx, field)
+			case "weaponKind":
+				return ec.fieldContext_Character_weaponKind(ctx, field)
+			case "region":
+				return ec.fieldContext_Character_region(ctx, field)
+			case "rarelity":
+				return ec.fieldContext_Character_rarelity(ctx, field)
+			case "health":
+				return ec.fieldContext_Character_health(ctx, field)
+			case "attack":
+				return ec.fieldContext_Character_attack(ctx, field)
+			case "defence":
+				return ec.fieldContext_Character_defence(ctx, field)
+			case "elementEnergy":
+				return ec.fieldContext_Character_elementEnergy(ctx, field)
+			case "uniqueAbility":
+				return ec.fieldContext_Character_uniqueAbility(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Character", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CharacterConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *dto.CharacterConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CharacterConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*dto.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋgraphᚋdtoᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CharacterConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CharacterConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNext":
+				return ec.fieldContext_PageInfo_hasNext(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_hasNext(ctx context.Context, field graphql.CollectedField, obj *dto.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasNext(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasNext, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasNext(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *dto.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_endCursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EndCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_character(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_character(ctx, field)
 	if err != nil {
@@ -577,6 +814,67 @@ func (ec *executionContext) fieldContext_Query_character(ctx context.Context, fi
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_character_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_characters(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_characters(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Characters(rctx, fc.Args["order"].(*dto.CharactersOrder), fc.Args["filter"].(*domain.CharacterFilterCriteria), fc.Args["first"].(uint))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*dto.CharacterConnection)
+	fc.Result = res
+	return ec.marshalNCharacterConnection2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋgraphᚋdtoᚐCharacterConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_characters(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "nodes":
+				return ec.fieldContext_CharacterConnection_nodes(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_CharacterConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CharacterConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_characters_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -804,6 +1102,164 @@ func (ec *executionContext) fieldContext_UniqueAbility_score(ctx context.Context
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCharacterFilterCriteria(ctx context.Context, obj interface{}) (domain.CharacterFilterCriteria, error) {
+	var it domain.CharacterFilterCriteria
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"element", "weaponKind", "region", "uniqueAbilityKind", "rarelity", "health", "attack", "defence", "elementEnergy", "uniqueAbilityScore"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "element":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("element"))
+			data, err := ec.unmarshalOElement2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐElement(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Element = data
+		case "weaponKind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("weaponKind"))
+			data, err := ec.unmarshalOWeaponKind2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐWeaponKind(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WeaponKind = data
+		case "region":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
+			data, err := ec.unmarshalORegion2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐRegion(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Region = data
+		case "uniqueAbilityKind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("uniqueAbilityKind"))
+			data, err := ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UniqueAbilityKind = data
+		case "rarelity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rarelity"))
+			data, err := ec.unmarshalOInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Rarelity = data
+		case "health":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("health"))
+			data, err := ec.unmarshalOComparisonCriterion2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐComparisonCriterion(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Health = data
+		case "attack":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attack"))
+			data, err := ec.unmarshalOComparisonCriterion2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐComparisonCriterion(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Attack = data
+		case "defence":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defence"))
+			data, err := ec.unmarshalOComparisonCriterion2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐComparisonCriterion(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Defence = data
+		case "elementEnergy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("elementEnergy"))
+			data, err := ec.unmarshalOComparisonCriterion2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐComparisonCriterion(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ElementEnergy = data
+		case "uniqueAbilityScore":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("uniqueAbilityScore"))
+			data, err := ec.unmarshalOComparisonCriterion2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐComparisonCriterion(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UniqueAbilityScore = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCharactersOrder(ctx context.Context, obj interface{}) (dto.CharactersOrder, error) {
+	var it dto.CharactersOrder
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"field", "direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNCharacterOrderField2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐCharacterOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputComparisonCriterion(ctx context.Context, obj interface{}) (domain.ComparisonCriterion, error) {
+	var it domain.ComparisonCriterion
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"op", "value"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "op":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("op"))
+			data, err := ec.unmarshalNComparisonOperator2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐComparisonOperator(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Op = data
+		case "value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			data, err := ec.unmarshalNNumeric2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐNumeric(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Value = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -896,6 +1352,91 @@ func (ec *executionContext) _Character(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var characterConnectionImplementors = []string{"CharacterConnection"}
+
+func (ec *executionContext) _CharacterConnection(ctx context.Context, sel ast.SelectionSet, obj *dto.CharacterConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, characterConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CharacterConnection")
+		case "nodes":
+			out.Values[i] = ec._CharacterConnection_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._CharacterConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var pageInfoImplementors = []string{"PageInfo"}
+
+func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *dto.PageInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PageInfo")
+		case "hasNext":
+			out.Values[i] = ec._PageInfo_hasNext(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "endCursor":
+			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -925,6 +1466,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_character(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "characters":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_characters(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -1013,6 +1576,106 @@ func (ec *executionContext) _UniqueAbility(ctx context.Context, sel ast.Selectio
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNCharacter2ᚕᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐCharacterᚄ(ctx context.Context, sel ast.SelectionSet, v []*domain.Character) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCharacter2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐCharacter(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCharacter2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐCharacter(ctx context.Context, sel ast.SelectionSet, v *domain.Character) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Character(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCharacterConnection2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋgraphᚋdtoᚐCharacterConnection(ctx context.Context, sel ast.SelectionSet, v dto.CharacterConnection) graphql.Marshaler {
+	return ec._CharacterConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCharacterConnection2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋgraphᚋdtoᚐCharacterConnection(ctx context.Context, sel ast.SelectionSet, v *dto.CharacterConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CharacterConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCharacterOrderField2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐCharacterOrderField(ctx context.Context, v interface{}) (domain.CharacterOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.CharacterOrderField(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCharacterOrderField2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐCharacterOrderField(ctx context.Context, sel ast.SelectionSet, v domain.CharacterOrderField) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNComparisonOperator2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐComparisonOperator(ctx context.Context, v interface{}) (domain.ComparisonOperator, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.ComparisonOperator(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNComparisonOperator2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐComparisonOperator(ctx context.Context, sel ast.SelectionSet, v domain.ComparisonOperator) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNElement2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐElement(ctx context.Context, v interface{}) (domain.Element, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := domain.Element(tmp)
@@ -1027,6 +1690,48 @@ func (ec *executionContext) marshalNElement2githubᚗcomᚋaerealᚋpocᚑgraphq
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNNumeric2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐNumeric(ctx context.Context, v interface{}) (*domain.Numeric, error) {
+	var res = new(domain.Numeric)
+	err := res.UnmarshalGQLContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNNumeric2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐNumeric(ctx context.Context, sel ast.SelectionSet, v *domain.Numeric) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return graphql.WrapContextMarshaler(ctx, v)
+}
+
+func (ec *executionContext) unmarshalNOrderDirection2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐOrderDirection(ctx context.Context, v interface{}) (domain.OrderDirection, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.OrderDirection(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOrderDirection2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐOrderDirection(ctx context.Context, sel ast.SelectionSet, v domain.OrderDirection) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋgraphᚋdtoᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *dto.PageInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNRegion2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐRegion(ctx context.Context, v interface{}) (domain.Region, error) {
@@ -1055,6 +1760,21 @@ func (ec *executionContext) marshalNUniqueAbility2ᚖgithubᚗcomᚋaerealᚋpoc
 	return ec._UniqueAbility(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNUnsignedInt2uint(ctx context.Context, v interface{}) (uint, error) {
+	res, err := graphql.UnmarshalUint(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUnsignedInt2uint(ctx context.Context, sel ast.SelectionSet, v uint) graphql.Marshaler {
+	res := graphql.MarshalUint(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNWeaponKind2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐWeaponKind(ctx context.Context, v interface{}) (domain.WeaponKind, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := domain.WeaponKind(tmp)
@@ -1076,6 +1796,63 @@ func (ec *executionContext) marshalOCharacter2ᚖgithubᚗcomᚋaerealᚋpocᚑg
 		return graphql.Null
 	}
 	return ec._Character(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOCharacterFilterCriteria2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐCharacterFilterCriteria(ctx context.Context, v interface{}) (*domain.CharacterFilterCriteria, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputCharacterFilterCriteria(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOCharactersOrder2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋgraphᚋdtoᚐCharactersOrder(ctx context.Context, v interface{}) (*dto.CharactersOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputCharactersOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOComparisonCriterion2ᚖgithubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐComparisonCriterion(ctx context.Context, v interface{}) (*domain.ComparisonCriterion, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputComparisonCriterion(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOElement2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐElement(ctx context.Context, v interface{}) (domain.Element, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.Element(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOElement2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐElement(ctx context.Context, sel ast.SelectionSet, v domain.Element) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
+func (ec *executionContext) unmarshalORegion2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐRegion(ctx context.Context, v interface{}) (domain.Region, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.Region(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalORegion2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐRegion(ctx context.Context, sel ast.SelectionSet, v domain.Region) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
+func (ec *executionContext) unmarshalOWeaponKind2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐWeaponKind(ctx context.Context, v interface{}) (domain.WeaponKind, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.WeaponKind(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOWeaponKind2githubᚗcomᚋaerealᚋpocᚑgraphqlᚑpqsᚑserverᚋdomainᚐWeaponKind(ctx context.Context, sel ast.SelectionSet, v domain.WeaponKind) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
 }
 
 // endregion ***************************** type.gotpl *****************************

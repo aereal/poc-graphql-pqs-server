@@ -1,3 +1,7 @@
+scalar UnsignedInt
+
+scalar Numeric
+
 enum Element {
   PYRO
   HYDRO
@@ -26,6 +30,27 @@ enum Region {
   SNEZHNAYA
 }
 
+enum OrderDirection {
+  ASC
+  DESC
+}
+
+enum CharacterOrderField {
+  HEALTH
+  ATTACK
+  DEFENCE
+  ELEMENT_ENERGY
+  UNIQUE_ABILITY_SCORE
+}
+
+enum ComparisonOperator {
+  EQ
+  LT
+  LTE
+  GT
+  GTE
+}
+
 type UniqueAbility {
   kind: String!
   score: Float!
@@ -44,6 +69,44 @@ type Character {
   uniqueAbility: UniqueAbility!
 }
 
+type CharacterConnection {
+  nodes: [Character!]!
+  pageInfo: PageInfo!
+}
+
+type PageInfo {
+  hasNext: Boolean!
+  endCursor: String
+}
+
+input ComparisonCriterion {
+  op: ComparisonOperator!
+  value: Numeric!
+}
+
+input CharactersOrder {
+  field: CharacterOrderField!
+  direction: OrderDirection!
+}
+
+input CharacterFilterCriteria {
+  element: Element
+  weaponKind: WeaponKind
+  region: Region
+  uniqueAbilityKind: String
+  rarelity: Int
+  health: ComparisonCriterion
+  attack: ComparisonCriterion
+  defence: ComparisonCriterion
+  elementEnergy: ComparisonCriterion
+  uniqueAbilityScore: ComparisonCriterion
+}
+
 extend type Query {
   character(name: String!): Character
+  characters(
+    order: CharactersOrder
+    filter: CharacterFilterCriteria
+    first: UnsignedInt!
+  ): CharacterConnection!
 }

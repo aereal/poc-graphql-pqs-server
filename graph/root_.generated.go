@@ -10,6 +10,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	"github.com/aereal/poc-graphql-pqs-server/domain"
+	"github.com/aereal/poc-graphql-pqs-server/graph/dto"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -52,8 +54,19 @@ type ComplexityRoot struct {
 		WeaponKind    func(childComplexity int) int
 	}
 
+	CharacterConnection struct {
+		Nodes    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	PageInfo struct {
+		EndCursor func(childComplexity int) int
+		HasNext   func(childComplexity int) int
+	}
+
 	Query struct {
-		Character func(childComplexity int, name string) int
+		Character  func(childComplexity int, name string) int
+		Characters func(childComplexity int, order *dto.CharactersOrder, filter *domain.CharacterFilterCriteria, first uint) int
 	}
 
 	UniqueAbility struct {
@@ -151,6 +164,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Character.WeaponKind(childComplexity), true
 
+	case "CharacterConnection.nodes":
+		if e.complexity.CharacterConnection.Nodes == nil {
+			break
+		}
+
+		return e.complexity.CharacterConnection.Nodes(childComplexity), true
+
+	case "CharacterConnection.pageInfo":
+		if e.complexity.CharacterConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.CharacterConnection.PageInfo(childComplexity), true
+
+	case "PageInfo.endCursor":
+		if e.complexity.PageInfo.EndCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.EndCursor(childComplexity), true
+
+	case "PageInfo.hasNext":
+		if e.complexity.PageInfo.HasNext == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasNext(childComplexity), true
+
 	case "Query.character":
 		if e.complexity.Query.Character == nil {
 			break
@@ -162,6 +203,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Character(childComplexity, args["name"].(string)), true
+
+	case "Query.characters":
+		if e.complexity.Query.Characters == nil {
+			break
+		}
+
+		args, err := ec.field_Query_characters_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Characters(childComplexity, args["order"].(*dto.CharactersOrder), args["filter"].(*domain.CharacterFilterCriteria), args["first"].(uint)), true
 
 	case "UniqueAbility.kind":
 		if e.complexity.UniqueAbility.Kind == nil {
@@ -184,7 +237,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
-	inputUnmarshalMap := graphql.BuildUnmarshalerMap()
+	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputCharacterFilterCriteria,
+		ec.unmarshalInputCharactersOrder,
+		ec.unmarshalInputComparisonCriterion,
+	)
 	first := true
 
 	switch rc.Operation.Operation {
@@ -266,7 +323,11 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../etc/core.schema.gql", Input: `enum Element {
+	{Name: "../etc/core.schema.gql", Input: `scalar UnsignedInt
+
+scalar Numeric
+
+enum Element {
   PYRO
   HYDRO
   CRYO
@@ -294,6 +355,27 @@ enum Region {
   SNEZHNAYA
 }
 
+enum OrderDirection {
+  ASC
+  DESC
+}
+
+enum CharacterOrderField {
+  HEALTH
+  ATTACK
+  DEFENCE
+  ELEMENT_ENERGY
+  UNIQUE_ABILITY_SCORE
+}
+
+enum ComparisonOperator {
+  EQ
+  LT
+  LTE
+  GT
+  GTE
+}
+
 type UniqueAbility {
   kind: String!
   score: Float!
@@ -312,8 +394,46 @@ type Character {
   uniqueAbility: UniqueAbility!
 }
 
+type CharacterConnection {
+  nodes: [Character!]!
+  pageInfo: PageInfo!
+}
+
+type PageInfo {
+  hasNext: Boolean!
+  endCursor: String
+}
+
+input ComparisonCriterion {
+  op: ComparisonOperator!
+  value: Numeric!
+}
+
+input CharactersOrder {
+  field: CharacterOrderField!
+  direction: OrderDirection!
+}
+
+input CharacterFilterCriteria {
+  element: Element
+  weaponKind: WeaponKind
+  region: Region
+  uniqueAbilityKind: String
+  rarelity: Int
+  health: ComparisonCriterion
+  attack: ComparisonCriterion
+  defence: ComparisonCriterion
+  elementEnergy: ComparisonCriterion
+  uniqueAbilityScore: ComparisonCriterion
+}
+
 extend type Query {
   character(name: String!): Character
+  characters(
+    order: CharactersOrder
+    filter: CharacterFilterCriteria
+    first: UnsignedInt!
+  ): CharacterConnection!
 }
 `, BuiltIn: false},
 }

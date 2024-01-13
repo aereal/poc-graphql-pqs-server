@@ -28,3 +28,24 @@ models:
   UniqueAbility:
     model:
       - github.com/aereal/poc-graphql-pqs-server/domain.UniqueAbility
+  OrderDirection:
+    model:
+      - github.com/aereal/poc-graphql-pqs-server/domain.OrderDirection
+  CharacterOrderField:
+    model:
+      - github.com/aereal/poc-graphql-pqs-server/domain.CharacterOrderField
+  UnsignedInt:
+    model:
+      - github.com/99designs/gqlgen/graphql.Uint
+  CharacterFilterCriteria:
+    model:
+      - github.com/aereal/poc-graphql-pqs-server/domain.CharacterFilterCriteria
+  ComparisonOperator:
+    model:
+      - github.com/aereal/poc-graphql-pqs-server/domain.ComparisonOperator
+  ComparisonCriterion:
+    model:
+      - github.com/aereal/poc-graphql-pqs-server/domain.ComparisonCriterion
+  Numeric:
+    model:
+      - github.com/aereal/poc-graphql-pqs-server/domain.Numeric

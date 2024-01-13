@@ -6,9 +6,11 @@ package resolvers
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/aereal/poc-graphql-pqs-server/domain"
 	"github.com/aereal/poc-graphql-pqs-server/graph"
+	"github.com/aereal/poc-graphql-pqs-server/graph/dto"
 	"github.com/aereal/poc-graphql-pqs-server/graph/loaders"
 )
 
@@ -19,6 +21,32 @@ func (r *queryResolver) Character(ctx context.Context, name string) (*domain.Cha
 		return nil, err
 	}
 	return character, nil
+}
+
+// Characters is the resolver for the characters field.
+func (r *queryResolver) Characters(ctx context.Context, order *dto.CharactersOrder, filter *domain.CharacterFilterCriteria, first uint) (*dto.CharacterConnection, error) {
+	opts := make([]domain.SearchCharactersOption, 0)
+	opts = append(opts, domain.WithLimit(first))
+	if order != nil {
+		opts = append(opts, domain.WithCharacterOrder(order.Field, order.Direction))
+	}
+	if filter != nil {
+		opts = append(opts, domain.WithCharacterFilterCriteria(filter))
+	}
+	characters, hasNext, err := r.characterRepo.SearchCharacters(ctx, opts...)
+	if err != nil {
+		return nil, err
+	}
+	pageInfo := &dto.PageInfo{HasNext: hasNext}
+	if len(characters) > 0 {
+		endCursor := strconv.Itoa(characters[len(characters)-1].ID) // TODO
+		pageInfo.EndCursor = &endCursor
+	}
+	conn := &dto.CharacterConnection{
+		PageInfo: pageInfo,
+		Nodes:    characters,
+	}
+	return conn, nil
 }
 
 // Query returns graph.QueryResolver implementation.
