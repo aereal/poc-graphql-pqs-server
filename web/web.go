@@ -17,6 +17,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/aereal/otelgqlgen"
+	"github.com/aereal/poc-graphql-pqs-server/graph/loaders"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -33,6 +34,8 @@ func WithExecutableSchema(es graphql.ExecutableSchema) Option {
 	return func(s *Server) { s.executableSchema = es }
 }
 
+func WithLoaderRoot(r *loaders.Root) Option { return func(s *Server) { s.loaderRoot = r } }
+
 func New(opts ...Option) *Server {
 	s := &Server{}
 	for _, o := range opts {
@@ -47,6 +50,7 @@ func New(opts ...Option) *Server {
 type Server struct {
 	port             string
 	executableSchema graphql.ExecutableSchema
+	loaderRoot       *loaders.Root
 }
 
 func (s *Server) handlerRoot() http.Handler {
@@ -64,6 +68,7 @@ func (s *Server) handlerGraphql() http.Handler {
 	h := handler.New(s.executableSchema)
 	h.AddTransport(transport.POST{})
 	h.Use(otelgqlgen.New())
+	h.Use(s.loaderRoot)
 	return h
 }
 

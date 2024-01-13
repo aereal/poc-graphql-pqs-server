@@ -6,15 +6,19 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aereal/poc-graphql-pqs-server/domain"
 	"github.com/aereal/poc-graphql-pqs-server/graph"
+	"github.com/aereal/poc-graphql-pqs-server/graph/loaders"
 )
 
 // Character is the resolver for the character field.
 func (r *queryResolver) Character(ctx context.Context, name string) (*domain.Character, error) {
-	panic(fmt.Errorf("not implemented: Character - character"))
+	character, err := loaders.GetCharacterByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return character, nil
 }
 
 // Query returns graph.QueryResolver implementation.
