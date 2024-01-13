@@ -15,6 +15,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/aereal/otelgqlgen"
 	"github.com/aereal/poc-graphql-pqs-server/graph/loaders"
@@ -67,6 +68,7 @@ func (s *Server) handler() http.Handler {
 func (s *Server) handlerGraphql() http.Handler {
 	h := handler.New(s.executableSchema)
 	h.AddTransport(transport.POST{})
+	h.Use(extension.Introspection{})
 	h.Use(otelgqlgen.New())
 	h.Use(s.loaderRoot)
 	return h
