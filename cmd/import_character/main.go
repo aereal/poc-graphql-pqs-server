@@ -93,12 +93,40 @@ func (a *app) insert(ctx context.Context, characters []*domain.Character) (err e
 		return fmt.Errorf("PingContext: %w", err)
 	}
 
+	type dto struct {
+		*domain.UniqueAbility
+		Name          string            `db:"name"`
+		Rarelity      int               `db:"rarelity"`
+		Element       domain.Element    `db:"element"`
+		Health        int               `db:"health"`
+		Attack        int               `db:"attack"`
+		Defence       int               `db:"defence"`
+		ElementEnergy int               `db:"element_energy"`
+		Region        domain.Region     `db:"region"`
+		WeaponKind    domain.WeaponKind `db:"weapon_kind"`
+	}
+	dtos := make([]dto, len(characters))
+	for i, c := range characters {
+		dtos[i] = dto{
+			UniqueAbility: c.UniqueAbility,
+			Name:          c.Name,
+			Rarelity:      c.Rarelity,
+			Element:       c.Element,
+			Health:        c.Health,
+			Attack:        c.Attack,
+			Defence:       c.Defence,
+			ElementEnergy: c.ElementEnergy,
+			Region:        c.Region,
+			WeaponKind:    c.WeaponKind,
+		}
+	}
+
 	query, args, err :=
 		goqu.Dialect("postgres").
 			From("characters").
 			Prepared(true).
 			Insert().
-			Rows(characters).
+			Rows(dtos).
 			ToSQL()
 	if err != nil {
 		return err
