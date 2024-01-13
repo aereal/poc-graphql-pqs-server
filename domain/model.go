@@ -59,6 +59,7 @@ func (r Region) Name() string {
 }
 
 type Character struct {
+	ID                 int        `db:"id"`
 	Name               string     `db:"name"`
 	Rarelity           int        `db:"rarelity"`
 	Element            Element    `db:"element"`
