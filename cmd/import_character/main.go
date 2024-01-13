@@ -159,6 +159,7 @@ func (a *app) parseRow(ctx context.Context, record []string) (_ *domain.Characte
 	}()
 
 	character := new(domain.Character)
+	character.UniqueAbility = new(domain.UniqueAbility)
 	if rarelity := strings.TrimFunc(record[0], func(r rune) bool { return !unicode.IsNumber(r) }); rarelity != "" {
 		var err error
 		character.Rarelity, err = strconv.Atoi(rarelity)
@@ -221,7 +222,7 @@ func (a *app) parseRow(ctx context.Context, record []string) (_ *domain.Characte
 			}
 			buf.WriteRune(r)
 		}
-		character.UniqueAbility = buf.String()
+		character.UniqueAbility.Kind = buf.String()
 	}
 	{
 		s := record[14]
@@ -237,7 +238,7 @@ func (a *app) parseRow(ctx context.Context, record []string) (_ *domain.Characte
 		if isPercentage {
 			score /= 100
 		}
-		character.UniqueAbilityScore = score
+		character.UniqueAbility.Score = score
 	}
 	return character, nil
 }

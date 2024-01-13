@@ -58,17 +58,22 @@ func (r Region) Name() string {
 	}
 }
 
+type UniqueAbility struct {
+	Kind  string  `db:"unique_ability"`
+	Score float64 `db:"unique_ability_score"`
+}
+
 type Character struct {
-	ID                 int        `db:"id"`
-	Name               string     `db:"name"`
-	Rarelity           int        `db:"rarelity"`
-	Element            Element    `db:"element"`
-	Health             int        `db:"health"`
-	Attack             int        `db:"attack"`
-	Defence            int        `db:"defence"`
-	UniqueAbility      string     `db:"unique_ability"`
-	UniqueAbilityScore float64    `db:"unique_ability_score"`
-	ElementEnergy      int        `db:"element_energy"`
-	Region             Region     `db:"region"`
-	WeaponKind         WeaponKind `db:"weapon_kind"`
+	*UniqueAbility
+
+	ID            int        `db:"id"`
+	Name          string     `db:"name"`
+	Rarelity      int        `db:"rarelity"`
+	Element       Element    `db:"element"`
+	Health        int        `db:"health"`
+	Attack        int        `db:"attack"`
+	Defence       int        `db:"defence"`
+	ElementEnergy int        `db:"element_energy"`
+	Region        Region     `db:"region"`
+	WeaponKind    WeaponKind `db:"weapon_kind"`
 }
