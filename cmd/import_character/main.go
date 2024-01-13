@@ -119,7 +119,7 @@ func (a *app) parseFile(ctx context.Context) (_ []*domain.Character, err error) 
 		span.End()
 	}()
 
-	f, err := os.Open("./characters.tsv")
+	f, err := os.Open(os.Getenv("INPUT_FILE"))
 	if err != nil {
 		return nil, fmt.Errorf("os.Open(): %w", err)
 	}
