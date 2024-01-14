@@ -38,6 +38,10 @@ func WithExecutableSchema(es graphql.ExecutableSchema) Option {
 
 func WithLoaderRoot(r *loaders.Root) Option { return func(s *Server) { s.loaderRoot = r } }
 
+func WithPersistedQueryList(queryList graphql.Cache) Option {
+	return func(s *Server) { s.queryList = queryList }
+}
+
 func New(opts ...Option) *Server {
 	s := &Server{}
 	for _, o := range opts {
@@ -53,6 +57,7 @@ type Server struct {
 	port             string
 	executableSchema graphql.ExecutableSchema
 	loaderRoot       *loaders.Root
+	queryList        graphql.Cache
 }
 
 func (s *Server) handlerRoot() http.Handler {
@@ -71,6 +76,7 @@ func (s *Server) handlerGraphql(public bool) http.Handler {
 	h := handler.New(s.executableSchema)
 	h.AddTransport(transport.POST{})
 	if public {
+		h.Use(extension.AutomaticPersistedQuery{Cache: s.queryList})
 	} else {
 		h.Use(extension.Introspection{})
 	}

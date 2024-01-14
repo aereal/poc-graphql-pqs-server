@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
 	"time"
@@ -9,6 +11,7 @@ import (
 	"github.com/aereal/poc-graphql-pqs-server/domain"
 	"github.com/aereal/poc-graphql-pqs-server/graph"
 	"github.com/aereal/poc-graphql-pqs-server/graph/loaders"
+	"github.com/aereal/poc-graphql-pqs-server/graph/persistedquery/apollo"
 	"github.com/aereal/poc-graphql-pqs-server/graph/resolvers"
 	"github.com/aereal/poc-graphql-pqs-server/infra"
 	"github.com/aereal/poc-graphql-pqs-server/logging"
@@ -40,14 +43,32 @@ func run() int {
 		slog.Error("failed to open DB", slog.String("error", err.Error()))
 		return 1
 	}
+	manifest, err := readManifest(os.Getenv("PERSISTED_QUERY_MANIFEST_FILE"))
+	if err != nil {
+		slog.Error("failed to read manifest", slog.String("error", err.Error()))
+		return 1
+	}
 	characterRepo := domain.NewCharacterRepository(domain.WithDB(db))
 	loaderRoot := loaders.New(loaders.WithCharacterRepository(characterRepo))
 	resolverRoot := resolvers.New(resolvers.WithCharacterRepository(characterRepo))
 	es := graph.NewExecutableSchema(graph.Config{Resolvers: resolverRoot})
-	srv := web.New(web.WithPort(os.Getenv("PORT")), web.WithExecutableSchema(es), web.WithLoaderRoot(loaderRoot))
+	srv := web.New(web.WithPort(os.Getenv("PORT")), web.WithExecutableSchema(es), web.WithLoaderRoot(loaderRoot), web.WithPersistedQueryList(apollo.New(manifest)))
 	if err := srv.Start(ctx); err != nil {
 		slog.Error("server is closed", slog.String("error", err.Error()))
 		return 1
 	}
 	return 0
+}
+
+func readManifest(file string) (*apollo.Manifest, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer f.Close()
+	var manifest apollo.Manifest
+	if err := json.NewDecoder(f).Decode(&manifest); err != nil {
+		return nil, fmt.Errorf("failed to decode manifest: %w", err)
+	}
+	return &manifest, nil
 }
