@@ -62,14 +62,18 @@ func (s *Server) handlerRoot() http.Handler {
 func (s *Server) handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/", s.handlerRoot())
-	mux.Handle("/graphql", s.handlerGraphql())
+	mux.Handle("/graphql", s.handlerGraphql(false))
+	mux.Handle("/public/graphql", s.handlerGraphql(true))
 	return withOtel(mux)
 }
 
-func (s *Server) handlerGraphql() http.Handler {
+func (s *Server) handlerGraphql(public bool) http.Handler {
 	h := handler.New(s.executableSchema)
 	h.AddTransport(transport.POST{})
-	h.Use(extension.Introspection{})
+	if public {
+	} else {
+		h.Use(extension.Introspection{})
+	}
 	h.Use(otelgqlgen.New())
 	h.Use(s.loaderRoot)
 	opts := cors.Options{
