@@ -1,12 +1,16 @@
 package infra
 
 import (
+	"context"
+	"database/sql/driver"
+	"log/slog"
 	"net/url"
 	"strconv"
 
 	"github.com/XSAM/otelsql"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+	pgquery "github.com/pganalyze/pg_query_go/v5"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
@@ -50,7 +54,7 @@ func OpenDB(opts ...Option) (*sqlx.DB, error) {
 	for _, o := range opts {
 		o(dbURL)
 	}
-	db, err := otelsql.Open(driverPgx, dbURL.String(), otelsql.WithAttributes(buildDefaultAttrs(dbURL)...))
+	db, err := otelsql.Open(driverPgx, dbURL.String(), otelsql.WithAttributes(buildDefaultAttrs(dbURL)...), otelsql.WithAttributesGetter(setAttributes))
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +74,43 @@ func buildDefaultAttrs(dbURL *url.URL) []attribute.KeyValue {
 	}
 	if path := dbURL.Path; len(path) > 1 {
 		attrs = append(attrs, semconv.DBName(path[1:]))
+	}
+	return attrs
+}
+
+func setAttributes(ctx context.Context, method otelsql.Method, query string, args []driver.NamedValue) (attrs []attribute.KeyValue) {
+	if query == "" {
+		return
+	}
+	result, err := pgquery.Parse(query)
+	if err != nil {
+		slog.WarnContext(ctx, "failed to parse query", slog.String("error.message", err.Error()))
+		return nil
+	}
+	for _, stmt := range result.Stmts {
+		if stmt.Stmt == nil {
+			continue
+		}
+		if stmt := stmt.Stmt.GetSelectStmt(); stmt != nil {
+			slog.InfoContext(ctx, "found SELECT", slog.Int("from_clause_num", len(stmt.FromClause)))
+			if len(stmt.FromClause) > 0 {
+				clause := stmt.FromClause[0]
+				attrs = append(attrs, semconv.DBOperation("SELECT"), semconv.DBSQLTable(clause.GetRangeVar().GetRelname()))
+			}
+			break
+		}
+		if stmt.Stmt.GetUpdateStmt() != nil {
+			slog.InfoContext(ctx, "found UPDATE")
+			break
+		}
+		if stmt.Stmt.GetInsertStmt() != nil {
+			slog.InfoContext(ctx, "found INSERT")
+			break
+		}
+		if stmt.Stmt.GetDeleteStmt() != nil {
+			slog.InfoContext(ctx, "found DELETE")
+			break
+		}
 	}
 	return attrs
 }
