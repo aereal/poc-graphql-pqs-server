@@ -27,12 +27,18 @@ func initialize(ctx context.Context) (*app, error) {
 		return nil, err
 	}
 	port := configConfig.Port
-	dbConnectInfo := configConfig.DBConnectInfo
-	db, err := infra.ProvideDB(dbConnectInfo)
+	otelinstrumentConfig := configConfig.OtelConfig
+	instrumentation, err := otelinstrument.ProvideInstrumentation(ctx, otelinstrumentConfig)
 	if err != nil {
 		return nil, err
 	}
-	characterRepository, err := domain.ProvideCharacterRepository(db)
+	tracerProvider := otelinstrument.ProvideTracerProvider(instrumentation)
+	dbConnectInfo := configConfig.DBConnectInfo
+	db, err := infra.ProvideDB(tracerProvider, dbConnectInfo)
+	if err != nil {
+		return nil, err
+	}
+	characterRepository, err := domain.ProvideCharacterRepository(tracerProvider, db)
 	if err != nil {
 		return nil, err
 	}
@@ -57,12 +63,7 @@ func initialize(ctx context.Context) (*app, error) {
 	if err != nil {
 		return nil, err
 	}
-	server, err := web.ProvideServer(port, executableSchema, root, cache)
-	if err != nil {
-		return nil, err
-	}
-	otelinstrumentConfig := configConfig.OtelConfig
-	instrumentation, err := otelinstrument.ProvideInstrumentation(ctx, otelinstrumentConfig)
+	server, err := web.ProvideServer(port, executableSchema, root, cache, tracerProvider)
 	if err != nil {
 		return nil, err
 	}

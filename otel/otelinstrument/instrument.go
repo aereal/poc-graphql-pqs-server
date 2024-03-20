@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"go.opentelemetry.io/otel"
+	"github.com/google/wire"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -22,6 +22,13 @@ const (
 type Config struct {
 	ShutdownGrace time.Duration
 }
+
+var Provider = wire.NewSet(
+	ProvideInstrumentation,
+	ProvideTracerProvider,
+)
+
+func ProvideTracerProvider(i *Instrumentation) trace.TracerProvider { return i.tp }
 
 func ProvideInstrumentation(ctx context.Context, cfg *Config) (*Instrumentation, error) {
 	exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure())
@@ -45,7 +52,6 @@ func ProvideInstrumentation(ctx context.Context, cfg *Config) (*Instrumentation,
 		sdktrace.WithBatcher(exporter),
 		sdktrace.WithResource(res),
 	)
-	otel.SetTracerProvider(tp)
 	i := &Instrumentation{tp: tp}
 	if cfg.ShutdownGrace > 0 {
 		i.shutdownGrace = cfg.ShutdownGrace

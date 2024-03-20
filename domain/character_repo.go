@@ -6,25 +6,29 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/jmoiron/sqlx"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func ProvideCharacterRepository(db *sqlx.DB) (*CharacterRepository, error) {
+func ProvideCharacterRepository(tp trace.TracerProvider, db *sqlx.DB) (*CharacterRepository, error) {
+	if tp == nil {
+		return nil, errors.New("trace.TracerProvider is required")
+	}
 	if db == nil {
 		return nil, errors.New("sqlx.DB is required")
 	}
 	r := &CharacterRepository{
 		db:     db,
-		tracer: otel.GetTracerProvider().Tracer(pkgName + ".CharacterRepository"),
+		tp:     tp,
+		tracer: sync.OnceValue(func() trace.Tracer { return tp.Tracer(pkgName + ".CharacterRepository") }),
 	}
 	r.tables.characters = goqu.Dialect("postgres").From("characters").Prepared(true)
 	return r, nil
@@ -32,13 +36,14 @@ func ProvideCharacterRepository(db *sqlx.DB) (*CharacterRepository, error) {
 
 type CharacterRepository struct {
 	db *sqlx.DB
+	tp trace.TracerProvider
 
-	tracer trace.Tracer
+	tracer func() trace.Tracer
 	tables struct{ characters *goqu.SelectDataset }
 }
 
 func (r *CharacterRepository) FindCharactersByNames(ctx context.Context, names []string) (_ map[string]*Character, err error) {
-	ctx, span := r.tracer.Start(ctx, "FindCharactersByNames", trace.WithAttributes(attribute.StringSlice("app.character.name", names)))
+	ctx, span := r.tracer().Start(ctx, "FindCharactersByNames", trace.WithAttributes(attribute.StringSlice("app.character.name", names)))
 	defer func() {
 		if err != nil {
 			span.RecordError(err)
@@ -243,7 +248,7 @@ func (r *CharacterRepository) SearchCharacters(ctx context.Context, opts ...Sear
 		o.applySearchCharactersOption(&searchArgs)
 	}
 
-	ctx, span := r.tracer.Start(ctx, "SearchCharacters", trace.WithAttributes(searchArgs.attributes()...))
+	ctx, span := r.tracer().Start(ctx, "SearchCharacters", trace.WithAttributes(searchArgs.attributes()...))
 	defer func() {
 		if err != nil {
 			span.RecordError(err)

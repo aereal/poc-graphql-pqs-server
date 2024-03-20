@@ -16,7 +16,7 @@ func initialize(context.Context) (*app, error) {
 		provideApp,
 		config.EnvironmentProvider,
 		infra.ProvideDB,
-		otelinstrument.ProvideInstrumentation,
+		otelinstrument.Provider,
 	)
 	return &app{}, nil
 }

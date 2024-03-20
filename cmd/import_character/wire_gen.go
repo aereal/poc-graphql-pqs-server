@@ -24,13 +24,14 @@ func initialize(contextContext context.Context) (*app, error) {
 	if err != nil {
 		return nil, err
 	}
-	dbConnectInfo := configConfig.DBConnectInfo
-	db, err := infra.ProvideDB(dbConnectInfo)
+	otelinstrumentConfig := configConfig.OtelConfig
+	instrumentation, err := otelinstrument.ProvideInstrumentation(contextContext, otelinstrumentConfig)
 	if err != nil {
 		return nil, err
 	}
-	otelinstrumentConfig := configConfig.OtelConfig
-	instrumentation, err := otelinstrument.ProvideInstrumentation(contextContext, otelinstrumentConfig)
+	tracerProvider := otelinstrument.ProvideTracerProvider(instrumentation)
+	dbConnectInfo := configConfig.DBConnectInfo
+	db, err := infra.ProvideDB(tracerProvider, dbConnectInfo)
 	if err != nil {
 		return nil, err
 	}

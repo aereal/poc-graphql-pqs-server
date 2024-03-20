@@ -29,7 +29,7 @@ func initialize(ctx context.Context) (*app, error) {
 		apollo.ProvideQueryCacheFromManifest,
 		apollo.ProvideManifestFromPath,
 		infra.ProvideDB,
-		otelinstrument.ProvideInstrumentation,
+		otelinstrument.Provider,
 	)
 	return &app{}, nil
 }

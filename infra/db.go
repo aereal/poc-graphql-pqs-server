@@ -10,6 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const driverPgx = "pgx"
@@ -22,7 +23,10 @@ type DBConnectInfo struct {
 	SSLMode  string
 }
 
-func ProvideDB(info *DBConnectInfo) (*sqlx.DB, error) {
+func ProvideDB(tp trace.TracerProvider, info *DBConnectInfo) (*sqlx.DB, error) {
+	if tp == nil {
+		return nil, errors.New("trace.TracerProvider is required")
+	}
 	if info == nil {
 		return nil, errors.New("DBConnectInfo is required")
 	}
@@ -35,7 +39,7 @@ func ProvideDB(info *DBConnectInfo) (*sqlx.DB, error) {
 		params.Set("sslmode", info.SSLMode)
 		dbURL.RawQuery = params.Encode()
 	}
-	db, err := otelsql.Open(driverPgx, dbURL.String(), otelsql.WithAttributes(buildDefaultAttrs(dbURL)...))
+	db, err := otelsql.Open(driverPgx, dbURL.String(), otelsql.WithTracerProvider(tp), otelsql.WithAttributes(buildDefaultAttrs(dbURL)...))
 	if err != nil {
 		return nil, err
 	}
