@@ -1,3 +1,5 @@
+//go:generate go run github.com/99designs/gqlgen generate
+
 package resolvers
 
 import "github.com/aereal/poc-graphql-pqs-server/domain"
