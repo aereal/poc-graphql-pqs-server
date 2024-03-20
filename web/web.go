@@ -28,29 +28,20 @@ const defaultPort = "8080"
 
 var shutdownGrace = time.Second * 5
 
-type Option func(*Server)
+type Port string
 
-func WithPort(port string) Option { return func(s *Server) { s.port = port } }
-
-func WithExecutableSchema(es graphql.ExecutableSchema) Option {
-	return func(s *Server) { s.executableSchema = es }
-}
-
-func WithLoaderRoot(r *loaders.Root) Option { return func(s *Server) { s.loaderRoot = r } }
-
-func WithPersistedQueryList(queryList graphql.Cache) Option {
-	return func(s *Server) { s.queryList = queryList }
-}
-
-func New(opts ...Option) *Server {
-	s := &Server{}
-	for _, o := range opts {
-		o(s)
+func ProvideServer(port Port, es graphql.ExecutableSchema, loadersRoot *loaders.Root, queryList graphql.Cache) (*Server, error) {
+	// TODO: check args
+	s := &Server{
+		port:             string(port),
+		executableSchema: es,
+		loaderRoot:       loadersRoot,
+		queryList:        queryList,
 	}
 	if s.port == "" {
 		s.port = defaultPort
 	}
-	return s
+	return s, nil
 }
 
 type Server struct {

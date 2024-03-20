@@ -11,17 +11,15 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
+	"sync"
 	"unicode"
 
 	"github.com/aereal/poc-graphql-pqs-server/domain"
-	"github.com/aereal/poc-graphql-pqs-server/infra"
 	"github.com/aereal/poc-graphql-pqs-server/logging"
 	"github.com/aereal/poc-graphql-pqs-server/otel/otelinstrument"
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/jmoiron/sqlx"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -34,33 +32,41 @@ func main() {
 func run() int {
 	logging.Init(logging.WithOutput(os.Stdout), logging.WithDebug(os.Getenv("DEBUG") != ""))
 	ctx := context.Background()
-	shutdown, err := otelinstrument.Instrument(ctx, otelinstrument.WithShutdownGrace(time.Second*5), otelinstrument.WithSetGlobalTracerProvider(true))
+	app, err := initialize(ctx)
 	if err != nil {
-		slog.Error("failed to instrument OpenTelemetry", slog.String("error", err.Error()))
+		slog.Error("failed to initialize app", slog.String("error", err.Error()))
 		return 1
 	}
-	defer shutdown()
-
-	db, err := infra.OpenDB(infra.WithAddr(os.Getenv("DB_ADDR")), infra.WithDBName(os.Getenv("DB_NAME")), infra.WithUser(os.Getenv("DB_USER")), infra.WithPassword(os.Getenv("DB_PASSWORD")), infra.WithSSLMode("disable"))
-	if err != nil {
-		slog.Error("failed to open DB", slog.String("error", err.Error()))
-		return 1
-	}
-
-	if err := (&app{tracer: otel.GetTracerProvider().Tracer("import_character"), db: db}).do(ctx); err != nil {
+	defer app.inst.Cleanup()
+	if err := app.do(ctx); err != nil {
 		slog.Error("import failure", slog.String("error", err.Error()))
 		return 1
 	}
 	return 0
 }
 
+func provideApp(db *sqlx.DB, inst *otelinstrument.Instrumentation) (*app, error) {
+	if db == nil {
+		return nil, errors.New("sqlx.DB is required")
+	}
+	if inst == nil {
+		return nil, errors.New("otelinstrumentation.Instrumentation is required")
+	}
+	return &app{
+		db:     db,
+		inst:   inst,
+		tracer: sync.OnceValue(func() trace.Tracer { return inst.TracerProvider().Tracer("import_character") }),
+	}, nil
+}
+
 type app struct {
-	tracer trace.Tracer
+	inst   *otelinstrument.Instrumentation
 	db     *sqlx.DB
+	tracer func() trace.Tracer
 }
 
 func (a *app) do(ctx context.Context) (err error) {
-	ctx, span := a.tracer.Start(ctx, "do")
+	ctx, span := a.tracer().Start(ctx, "do")
 	defer func() {
 		if err != nil {
 			span.RecordError(err)
@@ -80,7 +86,7 @@ func (a *app) do(ctx context.Context) (err error) {
 }
 
 func (a *app) insert(ctx context.Context, characters []*domain.Character) (err error) {
-	ctx, span := a.tracer.Start(ctx, "insert", trace.WithAttributes(attribute.Int("character_count", len(characters))))
+	ctx, span := a.tracer().Start(ctx, "insert", trace.WithAttributes(attribute.Int("character_count", len(characters))))
 	defer func() {
 		if err != nil {
 			span.RecordError(err)
@@ -138,7 +144,7 @@ func (a *app) insert(ctx context.Context, characters []*domain.Character) (err e
 }
 
 func (a *app) parseFile(ctx context.Context) (_ []*domain.Character, err error) {
-	ctx, span := a.tracer.Start(ctx, "parseFile")
+	ctx, span := a.tracer().Start(ctx, "parseFile")
 	defer func() {
 		if err != nil {
 			span.RecordError(err)
@@ -177,7 +183,7 @@ func (a *app) parseFile(ctx context.Context) (_ []*domain.Character, err error) 
 }
 
 func (a *app) parseRow(ctx context.Context, record []string) (_ *domain.Character, err error) {
-	ctx, span := a.tracer.Start(ctx, "parseRow")
+	ctx, span := a.tracer().Start(ctx, "parseRow")
 	defer func() {
 		if err != nil {
 			span.RecordError(err)

@@ -36,14 +36,13 @@ func GetCharacterByName(ctx context.Context, name string) (*domain.Character, er
 	return got, nil
 }
 
-func New(opts ...Option) *Root {
-	var cfg config
-	for _, o := range opts {
-		o(&cfg)
+func Provide(characterRepository *domain.CharacterRepository) (*Root, error) {
+	if characterRepository == nil {
+		return nil, errors.New("domain.CharacterRepository is required")
 	}
 	r := &Root{}
-	r.characterByName = loaderCharacterByName(cfg.characterRepo)
-	return r
+	r.characterByName = loaderCharacterByName(characterRepository)
+	return r, nil
 }
 
 type Root struct {

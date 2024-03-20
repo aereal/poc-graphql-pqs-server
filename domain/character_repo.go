@@ -18,15 +18,16 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func NewCharacterRepository(opts ...CharacterRepositoryOption) *CharacterRepository {
+func ProvideCharacterRepository(db *sqlx.DB) (*CharacterRepository, error) {
+	if db == nil {
+		return nil, errors.New("sqlx.DB is required")
+	}
 	r := &CharacterRepository{
+		db:     db,
 		tracer: otel.GetTracerProvider().Tracer(pkgName + ".CharacterRepository"),
 	}
-	for _, o := range opts {
-		o.applyCharacterRepositoryOption(r)
-	}
 	r.tables.characters = goqu.Dialect("postgres").From("characters").Prepared(true)
-	return r
+	return r, nil
 }
 
 type CharacterRepository struct {

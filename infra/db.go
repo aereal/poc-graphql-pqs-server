@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"errors"
 	"net/url"
 	"strconv"
 
@@ -13,42 +14,26 @@ import (
 
 const driverPgx = "pgx"
 
-type Option func(dbURL *url.URL)
+type DBConnectInfo struct {
+	Addr     string
+	Username string
+	Passwd   string
+	DBName   string
+	SSLMode  string
+}
 
-func WithUser(user string) Option {
-	return func(dbURL *url.URL) {
-		if passwd, ok := dbURL.User.Password(); ok {
-			dbURL.User = url.UserPassword(user, passwd)
-			return
-		}
-		dbURL.User = url.User(user)
+func ProvideDB(info *DBConnectInfo) (*sqlx.DB, error) {
+	if info == nil {
+		return nil, errors.New("DBConnectInfo is required")
 	}
-}
-
-func WithPassword(passwd string) Option {
-	return func(dbURL *url.URL) { dbURL.User = url.UserPassword(dbURL.User.Username(), passwd) }
-}
-
-func WithDBName(name string) Option {
-	return func(dbURL *url.URL) { dbURL.Path = "/" + url.PathEscape(name) }
-}
-
-func WithSSLMode(mode string) Option {
-	return func(dbURL *url.URL) {
-		params := dbURL.Query()
-		params.Set("sslmode", mode)
-		dbURL.RawQuery = params.Encode()
-	}
-}
-
-func WithAddr(addr string) Option {
-	return func(dbURL *url.URL) { dbURL.Host = addr }
-}
-
-func OpenDB(opts ...Option) (*sqlx.DB, error) {
 	dbURL := &url.URL{Scheme: "postgres"}
-	for _, o := range opts {
-		o(dbURL)
+	dbURL.User = url.UserPassword(info.Username, info.Passwd)
+	dbURL.Host = info.Addr
+	dbURL.Path = "/" + url.PathEscape(info.DBName)
+	if info.SSLMode != "" {
+		params := dbURL.Query()
+		params.Set("sslmode", info.SSLMode)
+		dbURL.RawQuery = params.Encode()
 	}
 	db, err := otelsql.Open(driverPgx, dbURL.String(), otelsql.WithAttributes(buildDefaultAttrs(dbURL)...))
 	if err != nil {

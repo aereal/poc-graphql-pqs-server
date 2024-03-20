@@ -2,18 +2,36 @@ package apollo
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"os"
 
 	"github.com/99designs/gqlgen/graphql"
 )
 
 type queryList map[string]string
 
-func New(manifest *Manifest) graphql.Cache {
+type ManifestFilePath string
+
+func ProvideManifestFromPath(file ManifestFilePath) (*Manifest, error) {
+	f, err := os.Open(string(file))
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer f.Close()
+	manifest := new(Manifest)
+	if err := json.NewDecoder(f).Decode(manifest); err != nil {
+		return nil, fmt.Errorf("failed to decode manifest: %w", err)
+	}
+	return manifest, nil
+}
+
+func ProvideQueryCacheFromManifest(manifest *Manifest) (graphql.Cache, error) {
 	list := make(queryList)
 	for _, op := range manifest.Operations {
 		list[op.ID] = op.Body
 	}
-	return list
+	return list, nil
 }
 
 var _ graphql.Cache = (queryList)(nil)
