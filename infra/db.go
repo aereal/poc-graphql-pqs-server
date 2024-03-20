@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"errors"
 	"net/url"
 	"strconv"
 
@@ -9,48 +10,36 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const driverPgx = "pgx"
 
-type Option func(dbURL *url.URL)
+type DBConnectInfo struct {
+	Addr     string
+	Username string
+	Passwd   string
+	DBName   string
+	SSLMode  string
+}
 
-func WithUser(user string) Option {
-	return func(dbURL *url.URL) {
-		if passwd, ok := dbURL.User.Password(); ok {
-			dbURL.User = url.UserPassword(user, passwd)
-			return
-		}
-		dbURL.User = url.User(user)
+func ProvideDB(tp trace.TracerProvider, info *DBConnectInfo) (*sqlx.DB, error) {
+	if tp == nil {
+		return nil, errors.New("trace.TracerProvider is required")
 	}
-}
-
-func WithPassword(passwd string) Option {
-	return func(dbURL *url.URL) { dbURL.User = url.UserPassword(dbURL.User.Username(), passwd) }
-}
-
-func WithDBName(name string) Option {
-	return func(dbURL *url.URL) { dbURL.Path = "/" + url.PathEscape(name) }
-}
-
-func WithSSLMode(mode string) Option {
-	return func(dbURL *url.URL) {
+	if info == nil {
+		return nil, errors.New("DBConnectInfo is required")
+	}
+	dbURL := &url.URL{Scheme: "postgres"}
+	dbURL.User = url.UserPassword(info.Username, info.Passwd)
+	dbURL.Host = info.Addr
+	dbURL.Path = "/" + url.PathEscape(info.DBName)
+	if info.SSLMode != "" {
 		params := dbURL.Query()
-		params.Set("sslmode", mode)
+		params.Set("sslmode", info.SSLMode)
 		dbURL.RawQuery = params.Encode()
 	}
-}
-
-func WithAddr(addr string) Option {
-	return func(dbURL *url.URL) { dbURL.Host = addr }
-}
-
-func OpenDB(opts ...Option) (*sqlx.DB, error) {
-	dbURL := &url.URL{Scheme: "postgres"}
-	for _, o := range opts {
-		o(dbURL)
-	}
-	db, err := otelsql.Open(driverPgx, dbURL.String(), otelsql.WithAttributes(buildDefaultAttrs(dbURL)...))
+	db, err := otelsql.Open(driverPgx, dbURL.String(), otelsql.WithTracerProvider(tp), otelsql.WithAttributes(buildDefaultAttrs(dbURL)...))
 	if err != nil {
 		return nil, err
 	}

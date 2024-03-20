@@ -2,8 +2,8 @@ schema:
   - './etc/core.schema.gql'
 exec:
   layout: follow-schema
-  dir: graph
-  package: graph
+  dir: graph/executableschema
+  package: executableschema
 model:
   filename: graph/dto/dto_gen.go
   package: dto

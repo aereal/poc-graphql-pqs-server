@@ -1,6 +1,12 @@
+//go:generate go run github.com/99designs/gqlgen generate
+
 package resolvers
 
-import "github.com/aereal/poc-graphql-pqs-server/domain"
+import (
+	"errors"
+
+	"github.com/aereal/poc-graphql-pqs-server/domain"
+)
 
 // This file will not be regenerated automatically.
 //
@@ -10,16 +16,10 @@ type Resolver struct {
 	characterRepo *domain.CharacterRepository
 }
 
-type Option func(*Resolver)
-
-func WithCharacterRepository(repo *domain.CharacterRepository) Option {
-	return func(r *Resolver) { r.characterRepo = repo }
-}
-
-func New(opts ...Option) *Resolver {
-	r := &Resolver{}
-	for _, o := range opts {
-		o(r)
+func Provide(characterRepo *domain.CharacterRepository) (*Resolver, error) {
+	if characterRepo == nil {
+		return nil, errors.New("domain.CharacterRepository is required")
 	}
-	return r
+	r := &Resolver{characterRepo: characterRepo}
+	return r, nil
 }

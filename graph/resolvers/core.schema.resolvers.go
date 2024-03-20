@@ -9,8 +9,8 @@ import (
 	"strconv"
 
 	"github.com/aereal/poc-graphql-pqs-server/domain"
-	"github.com/aereal/poc-graphql-pqs-server/graph"
 	"github.com/aereal/poc-graphql-pqs-server/graph/dto"
+	"github.com/aereal/poc-graphql-pqs-server/graph/executableschema"
 	"github.com/aereal/poc-graphql-pqs-server/graph/loaders"
 )
 
@@ -49,7 +49,7 @@ func (r *queryResolver) Characters(ctx context.Context, order *dto.CharactersOrd
 	return conn, nil
 }
 
-// Query returns graph.QueryResolver implementation.
-func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
+// Query returns executableschema.QueryResolver implementation.
+func (r *Resolver) Query() executableschema.QueryResolver { return &queryResolver{r} }
 
 type queryResolver struct{ *Resolver }

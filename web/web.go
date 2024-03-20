@@ -22,35 +22,28 @@ import (
 	"github.com/rs/cors"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const defaultPort = "8080"
 
 var shutdownGrace = time.Second * 5
 
-type Option func(*Server)
+type Port string
 
-func WithPort(port string) Option { return func(s *Server) { s.port = port } }
-
-func WithExecutableSchema(es graphql.ExecutableSchema) Option {
-	return func(s *Server) { s.executableSchema = es }
-}
-
-func WithLoaderRoot(r *loaders.Root) Option { return func(s *Server) { s.loaderRoot = r } }
-
-func WithPersistedQueryList(queryList graphql.Cache) Option {
-	return func(s *Server) { s.queryList = queryList }
-}
-
-func New(opts ...Option) *Server {
-	s := &Server{}
-	for _, o := range opts {
-		o(s)
+func ProvideServer(port Port, es graphql.ExecutableSchema, loadersRoot *loaders.Root, queryList graphql.Cache, tp trace.TracerProvider) (*Server, error) {
+	// TODO: check args
+	s := &Server{
+		port:             string(port),
+		executableSchema: es,
+		loaderRoot:       loadersRoot,
+		queryList:        queryList,
+		tp:               tp,
 	}
 	if s.port == "" {
 		s.port = defaultPort
 	}
-	return s
+	return s, nil
 }
 
 type Server struct {
@@ -58,6 +51,7 @@ type Server struct {
 	executableSchema graphql.ExecutableSchema
 	loaderRoot       *loaders.Root
 	queryList        graphql.Cache
+	tp               trace.TracerProvider
 }
 
 func (s *Server) handlerRoot() http.Handler {
@@ -69,7 +63,7 @@ func (s *Server) handler() http.Handler {
 	mux.Handle("/", s.handlerRoot())
 	mux.Handle("/graphql", s.handlerGraphql(false))
 	mux.Handle("/public/graphql", s.handlerGraphql(true))
-	return withOtel(mux)
+	return s.withOtel(mux)
 }
 
 func (s *Server) handlerGraphql(public bool) http.Handler {
@@ -112,8 +106,14 @@ func (s *Server) Start(ctx context.Context) error {
 	return nil
 }
 
-func withOtel(next http.Handler) http.Handler {
-	return otelhttp.NewMiddleware("", otelhttp.WithMessageEvents(otelhttp.ReadEvents, otelhttp.WriteEvents), otelhttp.WithSpanNameFormatter(formatSpanName), otelhttp.WithPublicEndpoint(), otelhttp.WithClientTrace(func(ctx context.Context) *httptrace.ClientTrace { return otelhttptrace.NewClientTrace(ctx) }))(next)
+func (s *Server) withOtel(next http.Handler) http.Handler {
+	return otelhttp.NewMiddleware("",
+		otelhttp.WithTracerProvider(s.tp),
+		otelhttp.WithMessageEvents(otelhttp.ReadEvents, otelhttp.WriteEvents),
+		otelhttp.WithSpanNameFormatter(formatSpanName),
+		otelhttp.WithPublicEndpoint(),
+		otelhttp.WithClientTrace(func(ctx context.Context) *httptrace.ClientTrace { return otelhttptrace.NewClientTrace(ctx) }),
+	)(next)
 }
 
 func formatSpanName(_ string, r *http.Request) string {
