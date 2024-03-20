@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/aereal/poc-graphql-pqs-server/domain"
-	"github.com/aereal/poc-graphql-pqs-server/graph"
+	"github.com/aereal/poc-graphql-pqs-server/graph/executableschema"
 	"github.com/aereal/poc-graphql-pqs-server/graph/loaders"
 	"github.com/aereal/poc-graphql-pqs-server/graph/persistedquery/apollo"
 	"github.com/aereal/poc-graphql-pqs-server/graph/resolvers"
@@ -51,7 +51,7 @@ func run() int {
 	characterRepo := domain.NewCharacterRepository(domain.WithDB(db))
 	loaderRoot := loaders.New(loaders.WithCharacterRepository(characterRepo))
 	resolverRoot := resolvers.New(resolvers.WithCharacterRepository(characterRepo))
-	es := graph.NewExecutableSchema(graph.Config{Resolvers: resolverRoot})
+	es := executableschema.NewExecutableSchema(executableschema.Config{Resolvers: resolverRoot})
 	srv := web.New(web.WithPort(os.Getenv("PORT")), web.WithExecutableSchema(es), web.WithLoaderRoot(loaderRoot), web.WithPersistedQueryList(apollo.New(manifest)))
 	if err := srv.Start(ctx); err != nil {
 		slog.Error("server is closed", slog.String("error", err.Error()))
